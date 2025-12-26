@@ -8,15 +8,25 @@ on:
   workflow_dispatch:
 
 jobs:
-  hello:
+  test:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Say Hello
-        run: echo "Hello GitHub Actions!"
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Show current date
-        run: date
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, xml, ctype, json, bcmath, curl
+          coverage: none
 
-      - name: Show system info
-        run: uname -a
+      - name: Show PHP version
+        run: php -v
+
+      - name: Show Composer version
+        run: composer -V
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress
