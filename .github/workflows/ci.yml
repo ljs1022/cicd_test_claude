@@ -25,19 +25,25 @@ jobs:
           --health-timeout=5s
           --health-retries=3
 
-    strategy:
-      matrix:
-        php: ['8.2', '8.3']
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup PHP ${{ matrix.php }}
+      - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: ${{ matrix.php }}
-          extensions: mbstring, xml, ctype, json, bcmath, curl, pdo_mysql
+          php-version: '8.2'
+          extensions: mbstring, xml, ctype, json, bcmath, curl, pdo_mysql, redis
           coverage: none
 
       - name: Get Composer cache directory
@@ -48,8 +54,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-php${{ matrix.php }}-composer-${{ hashFiles('**/composer.lock') }}
-          restore-keys: ${{ runner.os }}-php${{ matrix.php }}-composer-
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
 
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress
@@ -68,6 +74,10 @@ jobs:
           DB_DATABASE: testing
           DB_USERNAME: root
           DB_PASSWORD: password
+          CACHE_DRIVER: redis
+          QUEUE_CONNECTION: redis
+          REDIS_HOST: 127.0.0.1
+          REDIS_PORT: 6379
 
   pint:
     runs-on: ubuntu-latest
